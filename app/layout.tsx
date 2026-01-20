@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "TeeShop - Premium T-Shirts Collection",
+  title: "Mellow - Premium T-Shirts Collection",
   description: "Discover our curated selection of comfortable, stylish tees. Up to 40% off on selected items!",
 };
 

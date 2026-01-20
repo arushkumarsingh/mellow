@@ -22,6 +22,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Separator } from '@/components/ui/separator';
+import { Carousel } from '@/components/ui/carousel';
 
 interface TShirt {
   id: number;
@@ -29,7 +30,7 @@ interface TShirt {
   price: number;
   originalPrice: number;
   discount: number;
-  image: string;
+  images: string[];
   color: string;
 }
 
@@ -48,7 +49,7 @@ export default function TShirtStore() {
       price: 24.99,
       originalPrice: 39.99,
       discount: 38,
-      image: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=500&h=500&fit=crop',
+      images: ['/shirts/1.1.jpeg', '/shirts/1.2.jpeg'],
       color: 'White',
     },
     {
@@ -57,7 +58,7 @@ export default function TShirtStore() {
       price: 22.99,
       originalPrice: 34.99,
       discount: 34,
-      image: 'https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?w=500&h=500&fit=crop',
+      images: ['/shirts/1.1.jpeg', '/shirts/1.2.jpeg'],
       color: 'Black',
     },
     {
@@ -66,7 +67,7 @@ export default function TShirtStore() {
       price: 27.99,
       originalPrice: 44.99,
       discount: 38,
-      image: 'https://images.unsplash.com/photo-1622445275463-afa2ab738c34?w=500&h=500&fit=crop',
+      images: ['/shirts/1.1.jpeg', '/shirts/1.2.jpeg'],
       color: 'Navy',
     },
     {
@@ -75,7 +76,7 @@ export default function TShirtStore() {
       price: 21.99,
       originalPrice: 32.99,
       discount: 33,
-      image: 'https://images.unsplash.com/photo-1618354691373-d851c5c3a990?w=500&h=500&fit=crop',
+      images: ['/shirts/1.1.jpeg', '/shirts/1.2.jpeg'],
       color: 'Grey',
     },
     {
@@ -84,7 +85,7 @@ export default function TShirtStore() {
       price: 26.99,
       originalPrice: 42.99,
       discount: 37,
-      image: 'https://images.unsplash.com/photo-1622445272461-c6580cab8755?w=500&h=500&fit=crop',
+      images: ['/shirts/1.1.jpeg', '/shirts/1.2.jpeg'],
       color: 'Olive',
     },
     {
@@ -93,7 +94,7 @@ export default function TShirtStore() {
       price: 29.99,
       originalPrice: 49.99,
       discount: 40,
-      image: 'https://images.unsplash.com/photo-1503341455253-b2e723bb3dbb?w=500&h=500&fit=crop',
+      images: ['/shirts/1.1.jpeg', '/shirts/1.2.jpeg'],
       color: 'Burgundy',
     },
     {
@@ -102,7 +103,7 @@ export default function TShirtStore() {
       price: 23.99,
       originalPrice: 37.99,
       discount: 37,
-      image: 'https://images.unsplash.com/photo-1586363104862-3a5e2ab60d99?w=500&h=500&fit=crop',
+      images: ['/shirts/1.1.jpeg', '/shirts/1.2.jpeg'],
       color: 'Charcoal',
     },
     {
@@ -111,7 +112,7 @@ export default function TShirtStore() {
       price: 25.99,
       originalPrice: 39.99,
       discount: 35,
-      image: 'https://images.unsplash.com/photo-1576566588028-4147f3842f27?w=500&h=500&fit=crop',
+      images: ['/shirts/1.1.jpeg', '/shirts/1.2.jpeg'],
       color: 'Blue',
     },
   ];
@@ -163,7 +164,7 @@ export default function TShirtStore() {
           <div className="flex h-10 md:h-12 items-center justify-between">
             <div className="flex items-center gap-1.5 md:gap-2 text-xs md:text-sm text-foreground/80">
               <Tag className="h-3 w-3 md:h-4 md:w-4 text-secondary" />
-              <span className="font-medium truncate">Free shipping $50+!</span>
+              <span className="font-medium truncate">Free shipping ₹800+!</span>
             </div>
             <div className="flex items-center gap-2">
               {/* Notifications */}
@@ -245,7 +246,7 @@ export default function TShirtStore() {
       <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 shadow-lg shadow-primary/5">
         <div className="container mx-auto px-4">
           <div className="flex h-14 md:h-16 items-center justify-between">
-            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold bg-gradient-to-r from-primary via-secondary to-primary bg-clip-text text-transparent">TeeShop</h1>
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold bg-gradient-to-r from-primary via-secondary to-primary bg-clip-text text-transparent">Mellow</h1>
             <div className="flex items-center gap-2 md:gap-4">
 
               <Sheet open={showCheckout} onOpenChange={setShowCheckout}>
@@ -274,18 +275,20 @@ export default function TShirtStore() {
                       ) : (
                         cart.map((item) => (
                           <div key={item.id} className="flex gap-2.5 md:gap-4 border-b border-border pb-3 md:pb-4">
-                            <img
-                              src={item.image}
-                              alt={item.name}
-                              className="h-20 w-20 md:h-24 md:w-24 rounded-md object-cover flex-shrink-0"
-                            />
+                            <div className="h-20 w-20 md:h-24 md:w-24 rounded-md overflow-hidden flex-shrink-0">
+                              <img
+                                src={item.images[0]}
+                                alt={item.name}
+                                className="h-full w-full object-cover"
+                              />
+                            </div>
                             <div className="flex-1 min-w-0">
                               <h4 className="font-semibold text-sm md:text-base truncate">{item.name}</h4>
                               <p className="text-xs text-muted-foreground mt-0.5 md:mt-1">{item.color}</p>
                               <div className="flex items-center gap-1.5 md:gap-2 mt-1.5 md:mt-2">
                                 <span className="text-base md:text-lg font-bold">${item.price.toFixed(2)}</span>
                                 <span className="text-xs md:text-sm text-muted-foreground line-through">
-                                  ${item.originalPrice.toFixed(2)}
+                                  ₹{item.originalPrice.toFixed(2)}
                                 </span>
                               </div>
                               <div className="flex items-center gap-1.5 md:gap-2 mt-1.5 md:mt-2">
@@ -393,13 +396,13 @@ export default function TShirtStore() {
           {tshirts.map((tshirt) => (
             <Card key={tshirt.id} className="group overflow-hidden hover:shadow-2xl hover:shadow-primary/20 transition-all duration-300 border border-border hover:border-primary/50 bg-card/50 backdrop-blur">
               <div className="relative aspect-square overflow-hidden bg-muted/50">
-                <img
-                  src={tshirt.image}
-                  alt={tshirt.name}
-                  className="object-cover w-full h-full group-hover:scale-110 transition-transform duration-500"
+                <Carousel
+                  images={tshirt.images}
+                  className="h-full w-full"
+                  imageClassName="group-hover:scale-110 transition-transform duration-500"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                <Badge className="absolute top-2 left-2 md:top-3 md:left-3 text-xs md:text-sm bg-destructive hover:bg-destructive text-white shadow-lg">
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
+                <Badge className="absolute top-2 left-2 md:top-3 md:left-3 text-xs md:text-sm bg-destructive hover:bg-destructive text-white shadow-lg z-10">
                   {tshirt.discount}% OFF
                 </Badge>
               </div>
@@ -408,10 +411,10 @@ export default function TShirtStore() {
                 <p className="text-xs md:text-sm text-muted-foreground mb-2.5 md:mb-3">{tshirt.color}</p>
                 <div className="flex items-center gap-1.5 md:gap-2 mb-3 md:mb-4">
                   <span className="text-xl md:text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-                    ${tshirt.price.toFixed(2)}
+                    ₹{tshirt.price.toFixed(2)}
                   </span>
                   <span className="text-sm md:text-base text-muted-foreground line-through">
-                    ${tshirt.originalPrice.toFixed(2)}
+                    ₹{tshirt.originalPrice.toFixed(2)}
                   </span>
                 </div>
                 <Button
