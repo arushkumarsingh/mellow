@@ -11,25 +11,52 @@ interface CarouselProps {
 
 export function Carousel({ images, className, imageClassName }: CarouselProps) {
   const [currentIndex, setCurrentIndex] = React.useState(0)
-  const [touchStart, setTouchStart] = React.useState<number | null>(null)
-  const [touchEnd, setTouchEnd] = React.useState<number | null>(null)
+  const [touchStart, setTouchStart] = React.useState<{ x: number; y: number } | null>(null)
+  const [touchEnd, setTouchEnd] = React.useState<{ x: number; y: number } | null>(null)
+  const [isSwiping, setIsSwiping] = React.useState(false)
 
   // Minimum swipe distance (in px)
   const minSwipeDistance = 50
 
   const onTouchStart = (e: React.TouchEvent) => {
+    const touch = e.targetTouches[0]
     setTouchEnd(null)
-    setTouchStart(e.targetTouches[0].clientX)
+    setTouchStart({ x: touch.clientX, y: touch.clientY })
+    setIsSwiping(false)
   }
 
   const onTouchMove = (e: React.TouchEvent) => {
-    setTouchEnd(e.targetTouches[0].clientX)
+    if (!touchStart) return
+    
+    const touch = e.targetTouches[0]
+    const deltaX = Math.abs(touch.clientX - touchStart.x)
+    const deltaY = Math.abs(touch.clientY - touchStart.y)
+    
+    // Track movement but don't prevent default - let browser handle scrolling
+    // Only mark as swiping if horizontal movement is significantly greater
+    if (deltaX > deltaY * 1.5 && deltaX > 15) {
+      setIsSwiping(true)
+      setTouchEnd({ x: touch.clientX, y: touch.clientY })
+    } else if (deltaY > deltaX * 1.5) {
+      // Vertical scrolling detected - clear touch state to allow page scroll
+      setTouchStart(null)
+      setTouchEnd(null)
+      setIsSwiping(false)
+    } else {
+      // Track position for potential swipe
+      setTouchEnd({ x: touch.clientX, y: touch.clientY })
+    }
   }
 
   const onTouchEnd = () => {
-    if (!touchStart || !touchEnd) return
+    if (!touchStart || !touchEnd || !isSwiping) {
+      setTouchStart(null)
+      setTouchEnd(null)
+      setIsSwiping(false)
+      return
+    }
 
-    const distance = touchStart - touchEnd
+    const distance = touchStart.x - touchEnd.x
     const isLeftSwipe = distance > minSwipeDistance
     const isRightSwipe = distance < -minSwipeDistance
 
@@ -39,6 +66,10 @@ export function Carousel({ images, className, imageClassName }: CarouselProps) {
     if (isRightSwipe && currentIndex > 0) {
       setCurrentIndex(currentIndex - 1)
     }
+    
+    setTouchStart(null)
+    setTouchEnd(null)
+    setIsSwiping(false)
   }
 
   const goToSlide = (index: number) => {
@@ -49,26 +80,30 @@ export function Carousel({ images, className, imageClassName }: CarouselProps) {
 
   return (
     <div
-      className={cn("relative w-full h-full overflow-hidden select-none touch-pan-x", className)}
+      className={cn("relative w-full h-full overflow-hidden select-none", className)}
+      style={{ touchAction: 'pan-y pinch-zoom', maxWidth: '100%' }}
       onTouchStart={onTouchStart}
       onTouchMove={onTouchMove}
       onTouchEnd={onTouchEnd}
     >
       <div
-        className="flex transition-transform duration-300 ease-in-out h-full"
+        className="flex transition-transform duration-300 ease-in-out h-full w-full"
         style={{
           transform: `translateX(-${currentIndex * 100}%)`,
+          maxWidth: '100%'
         }}
       >
         {images.map((image, index) => (
           <div
             key={index}
-            className="min-w-full h-full flex-shrink-0"
+            className="min-w-full h-full flex-shrink-0 relative w-full"
+            style={{ maxWidth: '100%' }}
           >
             <img
               src={image}
               alt={`Image ${index + 1}`}
               className={cn("w-full h-full object-cover select-none", imageClassName)}
+              style={{ maxWidth: '100%', width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
               draggable={false}
               onDragStart={(e) => e.preventDefault()}
             />

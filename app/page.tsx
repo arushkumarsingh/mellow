@@ -360,10 +360,10 @@ export default function TShirtStore() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5 md:gap-6">
           {tshirts.map((tshirt) => (
             <Card key={tshirt.id} className="group overflow-hidden hover:shadow-2xl hover:shadow-primary/20 transition-all duration-300 border border-border hover:border-primary/50 bg-card/50 backdrop-blur">
-              <div className="relative aspect-square overflow-hidden bg-muted/50">
+              <div className="relative aspect-square overflow-hidden bg-muted/50 w-full">
                 <Carousel
                   images={tshirt.images}
-                  className="h-full w-full"
+                  className="h-full w-full max-w-full"
                   imageClassName="group-hover:scale-110 transition-transform duration-500"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
