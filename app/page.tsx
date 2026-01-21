@@ -45,76 +45,41 @@ export default function TShirtStore() {
   const tshirts: TShirt[] = [
     {
       id: 1,
-      name: 'Classic White Tee',
-      price: 24.99,
-      originalPrice: 39.99,
-      discount: 38,
+      name: 'Ghost Buster Tshirt',
+      price: 699,
+      originalPrice: 1399,
+      discount: 50,
       images: ['/shirts/1.1.jpeg', '/shirts/1.2.jpeg'],
       color: 'White',
     },
     {
       id: 2,
-      name: 'Black Essential Tee',
-      price: 22.99,
-      originalPrice: 34.99,
-      discount: 34,
-      images: ['/shirts/1.1.jpeg', '/shirts/1.2.jpeg'],
+      name: 'Music lover Tshirt',
+      price: 699,
+      originalPrice: 1399,
+      discount: 50,
+      images: ['/shirts/2.1.jpeg', '/shirts/2.2.jpeg'],
       color: 'Black',
     },
     {
       id: 3,
-      name: 'Navy Blue Crew Neck',
-      price: 27.99,
-      originalPrice: 44.99,
-      discount: 38,
-      images: ['/shirts/1.1.jpeg', '/shirts/1.2.jpeg'],
+      name: 'T-Shirt for Animal Lover',
+      price: 699,
+      originalPrice: 1399,
+      discount: 50,
+      images: ['/shirts/3.1.jpeg', '/shirts/3.2.jpeg'],
       color: 'Navy',
     },
     {
       id: 4,
-      name: 'Grey Heather Tee',
-      price: 21.99,
-      originalPrice: 32.99,
-      discount: 33,
-      images: ['/shirts/1.1.jpeg', '/shirts/1.2.jpeg'],
+      name: 'Super Bike Tshirt',
+      price: 699,
+      originalPrice: 1399,
+      discount: 50,
+      images: ['/shirts/4.1.jpeg', '/shirts/4.2.jpeg'],
       color: 'Grey',
     },
-    {
-      id: 5,
-      name: 'Olive Green Basic',
-      price: 26.99,
-      originalPrice: 42.99,
-      discount: 37,
-      images: ['/shirts/1.1.jpeg', '/shirts/1.2.jpeg'],
-      color: 'Olive',
-    },
-    {
-      id: 6,
-      name: 'Burgundy Pocket Tee',
-      price: 29.99,
-      originalPrice: 49.99,
-      discount: 40,
-      images: ['/shirts/1.1.jpeg', '/shirts/1.2.jpeg'],
-      color: 'Burgundy',
-    },
-    {
-      id: 7,
-      name: 'Charcoal V-Neck',
-      price: 23.99,
-      originalPrice: 37.99,
-      discount: 37,
-      images: ['/shirts/1.1.jpeg', '/shirts/1.2.jpeg'],
-      color: 'Charcoal',
-    },
-    {
-      id: 8,
-      name: 'Vintage Blue Tee',
-      price: 25.99,
-      originalPrice: 39.99,
-      discount: 35,
-      images: ['/shirts/1.1.jpeg', '/shirts/1.2.jpeg'],
-      color: 'Blue',
-    },
+    
   ];
 
   const notifications = [
@@ -286,9 +251,9 @@ export default function TShirtStore() {
                               <h4 className="font-semibold text-sm md:text-base truncate">{item.name}</h4>
                               <p className="text-xs text-muted-foreground mt-0.5 md:mt-1">{item.color}</p>
                               <div className="flex items-center gap-1.5 md:gap-2 mt-1.5 md:mt-2">
-                                <span className="text-base md:text-lg font-bold">${item.price.toFixed(2)}</span>
+                                <span className="text-base md:text-lg font-bold">₹{item.price}</span>
                                 <span className="text-xs md:text-sm text-muted-foreground line-through">
-                                  ₹{item.originalPrice.toFixed(2)}
+                                  ₹{item.originalPrice}
                                 </span>
                               </div>
                               <div className="flex items-center gap-1.5 md:gap-2 mt-1.5 md:mt-2">
@@ -328,18 +293,18 @@ export default function TShirtStore() {
                         <div className="space-y-1.5 md:space-y-2">
                           <div className="flex justify-between text-xs md:text-sm">
                             <span className="text-muted-foreground">Subtotal:</span>
-                            <span className="font-medium">${cartTotal.toFixed(2)}</span>
+                            <span className="font-medium">₹{cartTotal}</span>
                           </div>
                           <div className="flex justify-between text-xs md:text-sm">
                             <span className="text-muted-foreground">You saved:</span>
                             <span className="font-medium text-green-600">
-                              ${totalSavings.toFixed(2)}
+                             ₹{totalSavings}
                             </span>
                           </div>
                           <Separator />
                           <div className="flex justify-between text-base md:text-lg font-bold">
                             <span>Total:</span>
-                            <span>${cartTotal.toFixed(2)}</span>
+                            <span>₹{cartTotal}</span>
                           </div>
                         </div>
                         <Button className="w-full h-10 md:h-11 text-sm md:text-base">
@@ -411,10 +376,10 @@ export default function TShirtStore() {
                 <p className="text-xs md:text-sm text-muted-foreground mb-2.5 md:mb-3">{tshirt.color}</p>
                 <div className="flex items-center gap-1.5 md:gap-2 mb-3 md:mb-4">
                   <span className="text-xl md:text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-                    ₹{tshirt.price.toFixed(2)}
+                    ₹{tshirt.price}
                   </span>
                   <span className="text-sm md:text-base text-muted-foreground line-through">
-                    ₹{tshirt.originalPrice.toFixed(2)}
+                    ₹{tshirt.originalPrice}
                   </span>
                 </div>
                 <Button
