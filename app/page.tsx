@@ -644,19 +644,52 @@ export default function TShirtStore() {
       {showWhatsAppPopup && (
         <div 
           className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4" 
-          onClick={() => setShowWhatsAppPopup(false)}
+          onClick={(e) => {
+            // Only close if clicking directly on the overlay, not on children
+            if (e.target === e.currentTarget) {
+              setShowWhatsAppPopup(false);
+            }
+          }}
+          onTouchStart={(e) => {
+            // Mark that touch started on overlay
+            if (e.target === e.currentTarget) {
+              (e.currentTarget as HTMLElement).setAttribute('data-touch-start', 'true');
+            }
+          }}
+          onTouchEnd={(e) => {
+            // Only close if touch started and ended on overlay
+            if (e.target === e.currentTarget && (e.currentTarget as HTMLElement).getAttribute('data-touch-start') === 'true') {
+              e.preventDefault();
+              setShowWhatsAppPopup(false);
+              (e.currentTarget as HTMLElement).removeAttribute('data-touch-start');
+            }
+          }}
         >
           <div 
-            className="bg-background border border-border rounded-lg shadow-2xl max-w-md w-full p-6 relative z-[101]" 
+            className="bg-background border border-border rounded-lg shadow-2xl max-w-md w-full p-6 relative z-[101]"
+            style={{ pointerEvents: 'auto' }}
             onClick={(e) => e.stopPropagation()}
             onMouseDown={(e) => e.stopPropagation()}
+            onTouchStart={(e) => {
+              e.stopPropagation();
+              // Don't prevent default here to allow normal touch interactions
+            }}
+            onTouchMove={(e) => e.stopPropagation()}
+            onTouchEnd={(e) => e.stopPropagation()}
           >
             <button
               onClick={(e) => {
+                e.preventDefault();
                 e.stopPropagation();
                 setShowWhatsAppPopup(false);
               }}
-              className="absolute top-4 right-4 text-muted-foreground hover:text-foreground transition-colors z-10"
+              onTouchEnd={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setShowWhatsAppPopup(false);
+              }}
+              className="absolute top-4 right-4 text-muted-foreground hover:text-foreground transition-colors z-10 touch-manipulation"
+              style={{ WebkitTapHighlightColor: 'transparent' }}
             >
               <X className="h-5 w-5" />
             </button>
@@ -673,28 +706,52 @@ export default function TShirtStore() {
                 </p>
               </div>
               <div className="flex flex-col gap-3">
-                <Button
+                <button
+                  type="button"
                   onClick={(e) => {
+                    e.preventDefault();
                     e.stopPropagation();
                     window.open('https://chat.whatsapp.com/Gs5NUa2iIh7FJ7zIRRH1ke', '_blank');
                   }}
-                  className="w-full bg-green-600 hover:bg-green-700 text-white"
+                  onTouchStart={(e) => {
+                    e.stopPropagation();
+                  }}
+                  onTouchEnd={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    window.open('https://chat.whatsapp.com/Gs5NUa2iIh7FJ7zIRRH1ke', '_blank');
+                  }}
+                  className="w-full bg-green-600 hover:bg-green-700 text-white py-3 px-4 rounded-md font-semibold transition-colors touch-manipulation active:bg-green-800"
+                  style={{ WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation', cursor: 'pointer' }}
                 >
                   Join WhatsApp Channel
-                </Button>
-                <Button
-                  variant="outline"
+                </button>
+                <button
+                  type="button"
                   onClick={(e) => {
+                    e.preventDefault();
                     e.stopPropagation();
                     setShowWhatsAppPopup(false);
                     setShowCheckoutForm(false);
                     setShowCheckout(false);
                     setCart([]);
                   }}
-                  className="w-full"
+                  onTouchStart={(e) => {
+                    e.stopPropagation();
+                  }}
+                  onTouchEnd={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setShowWhatsAppPopup(false);
+                    setShowCheckoutForm(false);
+                    setShowCheckout(false);
+                    setCart([]);
+                  }}
+                  className="w-full border border-border bg-background hover:bg-accent text-foreground py-3 px-4 rounded-md font-semibold transition-colors touch-manipulation active:bg-accent/80"
+                  style={{ WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation', cursor: 'pointer' }}
                 >
                   Continue Shopping
-                </Button>
+                </button>
               </div>
             </div>
           </div>
