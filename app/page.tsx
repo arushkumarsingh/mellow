@@ -1,7 +1,8 @@
 "use client"
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ShoppingCart, Bell, User, X, Tag, Minus, Plus, LogOut, Settings, Package, Heart, CreditCard } from 'lucide-react';
+import { useForm, ValidationError } from '@formspree/react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -41,6 +42,8 @@ interface CartItem extends TShirt {
 export default function TShirtStore() {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [showCheckout, setShowCheckout] = useState(false);
+  const [showCheckoutForm, setShowCheckoutForm] = useState(false);
+  const [showWhatsAppPopup, setShowWhatsAppPopup] = useState(false);
 
   const tshirts: TShirt[] = [
     {
@@ -121,91 +124,337 @@ export default function TShirtStore() {
     0
   );
 
-  return (
-    <div className="min-h-screen bg-background">
-      {/* Top Header - Account & Notifications */}
-      <div className="border-b border-border bg-gradient-to-r from-primary/10 to-secondary/10 backdrop-blur">
-        <div className="container mx-auto px-4">
-          <div className="flex h-10 md:h-12 items-center justify-between">
-            <div className="flex items-center gap-1.5 md:gap-2 text-xs md:text-sm text-foreground/80">
-              <Tag className="h-3 w-3 md:h-4 md:w-4 text-secondary" />
-              <span className="font-medium truncate">Free shipping ₹800+!</span>
-            </div>
-            <div className="flex items-center gap-2">
-              {/* Notifications */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="relative h-9 w-9">
-                    <Bell className="h-4 w-4" />
-                    <Badge className="absolute -right-1 -top-1 h-4 w-4 rounded-full p-0 flex items-center justify-center text-[10px]">
-                      {notifications.filter((n) => n.unread).length}
-                    </Badge>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-80">
-                  <DropdownMenuLabel>Notifications</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  {notifications.map((notif) => (
-                    <DropdownMenuItem key={notif.id} className="flex flex-col items-start gap-1 py-3">
-                      <div className="flex items-center gap-2 w-full">
-                        {notif.unread && (
-                          <div className="h-2 w-2 rounded-full bg-primary" />
-                        )}
-                        <span className="text-sm flex-1">{notif.text}</span>
-                      </div>
-                      <span className="text-xs text-muted-foreground pl-4">{notif.time}</span>
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
+  function CheckoutForm() {
+    const [state, handleSubmit] = useForm("maqenong");
+    const [localErrors, setLocalErrors] = useState<Record<string, string>>({});
+    
+    useEffect(() => {
+      if (state.succeeded) {
+        setShowWhatsAppPopup(true);
+      }
+    }, [state.succeeded]);
 
-              {/* Account */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-9 w-9">
-                    <User className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-72">
-                  <div className="px-2 py-3 border-b border-border">
-                    <p className="text-sm font-semibold">John Doe</p>
-                    <p className="text-xs text-muted-foreground">john.doe@example.com</p>
-                  </div>
-                  <DropdownMenuLabel className="text-xs text-muted-foreground uppercase tracking-wide">Account</DropdownMenuLabel>
-                  <DropdownMenuItem className="gap-2 py-2.5">
-                    <User className="h-4 w-4" />
-                    <span>Profile</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem className="gap-2 py-2.5">
-                    <Package className="h-4 w-4" />
-                    <span>Orders</span>
-                    <Badge className="ml-auto" variant="secondary">3</Badge>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem className="gap-2 py-2.5">
-                    <Heart className="h-4 w-4" />
-                    <span>Wishlist</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem className="gap-2 py-2.5">
-                    <CreditCard className="h-4 w-4" />
-                    <span>Payment Methods</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuLabel className="text-xs text-muted-foreground uppercase tracking-wide">Preferences</DropdownMenuLabel>
-                  <DropdownMenuItem className="gap-2 py-2.5">
-                    <Settings className="h-4 w-4" />
-                    <span>Settings</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem className="gap-2 py-2.5 text-destructive focus:text-destructive">
-                    <LogOut className="h-4 w-4" />
-                    <span>Logout</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+    const validateField = (name: string, value: string): string => {
+      switch (name) {
+        case 'name':
+          if (!value.trim()) return 'Name is required';
+          if (value.trim().length < 2) return 'Name must be at least 2 characters';
+          if (/[0-9]/.test(value)) return 'Name cannot contain numbers';
+          return '';
+        case 'mobile':
+          if (!value.trim()) return 'Mobile number is required';
+          const mobileRegex = /^[6-9]\d{9}$/;
+          const cleanMobile = value.replace(/\D/g, '');
+          if (cleanMobile.length !== 10) return 'Mobile number must be 10 digits';
+          if (!mobileRegex.test(cleanMobile)) return 'Mobile number must start with 6-9';
+          return '';
+        case 'address':
+          if (!value.trim()) return 'Address is required';
+          if (value.trim().length < 10) return 'Address must be at least 10 characters';
+          return '';
+        case 'city':
+          if (!value.trim()) return 'City is required';
+          if (value.trim().length < 2) return 'City must be at least 2 characters';
+          if (/[0-9]/.test(value)) return 'City cannot contain numbers';
+          return '';
+        case 'pincode':
+          if (!value.trim()) return 'Pin code is required';
+          const pincodeRegex = /^\d{6}$/;
+          if (!pincodeRegex.test(value.trim())) return 'Pin code must be 6 digits';
+          return '';
+        case 'state':
+          if (!value.trim()) return 'State is required';
+          if (value.trim().length < 2) return 'State must be at least 2 characters';
+          if (/[0-9]/.test(value)) return 'State cannot contain numbers';
+          return '';
+        case 'gender':
+          if (!value) return 'Please select your gender';
+          return '';
+        default:
+          return '';
+      }
+    };
+
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+      const { name, value } = e.target;
+      let processedValue = value;
+      
+      // Format mobile number - only allow digits
+      if (name === 'mobile' && e.target instanceof HTMLInputElement) {
+        const digitsOnly = value.replace(/\D/g, '').slice(0, 10);
+        e.target.value = digitsOnly;
+        processedValue = digitsOnly;
+      }
+      
+      // Format pincode - only allow digits
+      if (name === 'pincode' && e.target instanceof HTMLInputElement) {
+        const digitsOnly = value.replace(/\D/g, '').slice(0, 6);
+        e.target.value = digitsOnly;
+        processedValue = digitsOnly;
+      }
+      
+      const error = validateField(name, processedValue);
+      setLocalErrors(prev => ({
+        ...prev,
+        [name]: error
+      }));
+    };
+
+    const validateForm = (formData: FormData): boolean => {
+      const errors: Record<string, string> = {};
+      const fields = ['name', 'mobile', 'address', 'city', 'pincode', 'state', 'gender'];
+      
+      fields.forEach(field => {
+        const value = formData.get(field) as string;
+        const error = validateField(field, value);
+        if (error) {
+          errors[field] = error;
+        }
+      });
+
+      setLocalErrors(errors);
+      return Object.keys(errors).length === 0;
+    };
+
+    const handleFormSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+      e.preventDefault();
+      const formData = new FormData(e.currentTarget);
+      
+      if (!validateForm(formData)) {
+        return;
+      }
+
+      await handleSubmit(e);
+    };
+
+    if (state.succeeded) {
+      return (
+        <div className="p-6 text-center">
+          <div className="mb-4">
+            <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
+              <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
             </div>
+            <h3 className="text-xl font-bold text-foreground mb-2">Prebook Successful!</h3>
+            <p className="text-muted-foreground">Thank you for your prebook. Join our WhatsApp channel for updates!</p>
+          </div>
+          <Button onClick={() => { setShowCheckoutForm(false); setShowCheckout(false); setCart([]); }}>
+            Continue Shopping
+          </Button>
+        </div>
+      );
+    }
+    return (
+      <form onSubmit={handleFormSubmit} className="space-y-5 pb-4">
+        <div>
+          <label htmlFor="name" className="block text-sm font-semibold text-foreground mb-2">
+            Name <span className="text-destructive">*</span>
+          </label>
+          <input
+            id="name"
+            type="text"
+            name="name"
+            required
+            onChange={handleInputChange}
+            className={`w-full px-4 py-2.5 border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all ${
+              localErrors.name ? 'border-destructive' : 'border-border'
+            }`}
+            placeholder="Enter your full name"
+          />
+          {localErrors.name && (
+            <p className="text-destructive text-sm mt-1.5">{localErrors.name}</p>
+          )}
+          <ValidationError 
+            prefix="Name" 
+            field="name"
+            errors={state.errors}
+            className="text-destructive text-sm mt-1.5 block"
+          />
+        </div>
+
+        <div>
+          <label htmlFor="mobile" className="block text-sm font-semibold text-foreground mb-2">
+            Mobile Number <span className="text-destructive">*</span>
+          </label>
+          <input
+            id="mobile"
+            type="tel"
+            name="mobile"
+            required
+            onChange={handleInputChange}
+            maxLength={10}
+            className={`w-full px-4 py-2.5 border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all ${
+              localErrors.mobile ? 'border-destructive' : 'border-border'
+            }`}
+            placeholder="Enter 10-digit mobile number"
+          />
+          {localErrors.mobile && (
+            <p className="text-destructive text-sm mt-1.5">{localErrors.mobile}</p>
+          )}
+          <ValidationError 
+            prefix="Mobile" 
+            field="mobile"
+            errors={state.errors}
+            className="text-destructive text-sm mt-1.5 block"
+          />
+        </div>
+
+        <div>
+          <label htmlFor="address" className="block text-sm font-semibold text-foreground mb-2">
+            Address <span className="text-destructive">*</span>
+          </label>
+          <textarea
+            id="address"
+            name="address"
+            required
+            rows={4}
+            onChange={handleInputChange}
+            className={`w-full px-4 py-2.5 border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent resize-none transition-all ${
+              localErrors.address ? 'border-destructive' : 'border-border'
+            }`}
+            placeholder="Enter your complete address"
+          />
+          {localErrors.address && (
+            <p className="text-destructive text-sm mt-1.5">{localErrors.address}</p>
+          )}
+          <ValidationError 
+            prefix="Address" 
+            field="address"
+            errors={state.errors}
+            className="text-destructive text-sm mt-1.5 block"
+          />
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label htmlFor="city" className="block text-sm font-semibold text-foreground mb-2">
+              City <span className="text-destructive">*</span>
+            </label>
+            <input
+              id="city"
+              type="text"
+              name="city"
+              required
+              onChange={handleInputChange}
+              className={`w-full px-4 py-2.5 border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all ${
+                localErrors.city ? 'border-destructive' : 'border-border'
+              }`}
+              placeholder="Enter your city"
+            />
+            {localErrors.city && (
+              <p className="text-destructive text-sm mt-1.5">{localErrors.city}</p>
+            )}
+            <ValidationError 
+              prefix="City" 
+              field="city"
+              errors={state.errors}
+              className="text-destructive text-sm mt-1.5 block"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="pincode" className="block text-sm font-semibold text-foreground mb-2">
+              Pin Code <span className="text-destructive">*</span>
+            </label>
+            <input
+              id="pincode"
+              type="text"
+              name="pincode"
+              required
+              onChange={handleInputChange}
+              maxLength={6}
+              className={`w-full px-4 py-2.5 border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all ${
+                localErrors.pincode ? 'border-destructive' : 'border-border'
+              }`}
+              placeholder="Enter 6-digit pin code"
+            />
+            {localErrors.pincode && (
+              <p className="text-destructive text-sm mt-1.5">{localErrors.pincode}</p>
+            )}
+            <ValidationError 
+              prefix="Pin Code" 
+              field="pincode"
+              errors={state.errors}
+              className="text-destructive text-sm mt-1.5 block"
+            />
           </div>
         </div>
-      </div>
+
+        <div>
+          <label htmlFor="state" className="block text-sm font-semibold text-foreground mb-2">
+            State <span className="text-destructive">*</span>
+          </label>
+          <input
+            id="state"
+            type="text"
+            name="state"
+            required
+            onChange={handleInputChange}
+            className={`w-full px-4 py-2.5 border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all ${
+              localErrors.state ? 'border-destructive' : 'border-border'
+            }`}
+            placeholder="Enter your state"
+          />
+          {localErrors.state && (
+            <p className="text-destructive text-sm mt-1.5">{localErrors.state}</p>
+          )}
+          <ValidationError 
+            prefix="State" 
+            field="state"
+            errors={state.errors}
+            className="text-destructive text-sm mt-1.5 block"
+          />
+        </div>
+
+        <div>
+          <label htmlFor="gender" className="block text-sm font-semibold text-foreground mb-2">
+            Gender <span className="text-destructive">*</span>
+          </label>
+          <select
+            id="gender"
+            name="gender"
+            required
+            onChange={handleInputChange}
+            className={`w-full px-4 py-2.5 border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all ${
+              localErrors.gender ? 'border-destructive' : 'border-border'
+            }`}
+          >
+            <option value="">Select gender</option>
+            <option value="male">Male</option>
+            <option value="female">Female</option>
+            <option value="other">Other</option>
+          </select>
+          {localErrors.gender && (
+            <p className="text-destructive text-sm mt-1.5">{localErrors.gender}</p>
+          )}
+          <ValidationError 
+            prefix="Gender" 
+            field="gender"
+            errors={state.errors}
+            className="text-destructive text-sm mt-1.5 block"
+          />
+        </div>
+
+        <div className="flex gap-3 pt-4">
+          <Button
+            type="button"
+            variant="outline"
+            className="flex-1 h-11"
+            onClick={() => setShowCheckoutForm(false)}
+          >
+            Back
+          </Button>
+          <Button type="submit" disabled={state.submitting} className="flex-1 h-11 font-semibold">
+            {state.submitting ? 'Submitting...' : 'Prebook Order'}
+          </Button>
+        </div>
+      </form>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-background">
 
       {/* Main Header */}
       <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 shadow-lg shadow-primary/5">
@@ -226,93 +475,137 @@ export default function TShirtStore() {
                     )}
                   </Button>
                 </SheetTrigger>
-                <SheetContent className="w-full sm:max-w-lg flex flex-col">
-                  <SheetHeader className="flex-shrink-0">
-                    <SheetTitle className="text-lg md:text-xl">Shopping Cart</SheetTitle>
+                <SheetContent className="w-full sm:max-w-lg flex flex-col p-0 h-full max-h-screen">
+                  <SheetHeader className="flex-shrink-0 px-6 pt-6 pb-4 border-b border-border">
+                    <SheetTitle className="text-lg md:text-xl">
+                      {showCheckoutForm ? 'Checkout' : 'Shopping Cart'}
+                    </SheetTitle>
                     <SheetDescription className="text-sm">
-                      {cartItemCount} {cartItemCount === 1 ? 'item' : 'items'} in your cart
+                      {showCheckoutForm 
+                        ? 'Please fill in your details to complete your order'
+                        : `${cartItemCount} ${cartItemCount === 1 ? 'item' : 'items'} in your cart`
+                      }
                     </SheetDescription>
                   </SheetHeader>
-                  <div className="flex flex-col flex-1 min-h-0">
-                    <div className="flex-1 overflow-auto mt-6 md:mt-8 space-y-3 md:space-y-4">
-                      {cart.length === 0 ? (
-                        <p className="text-center text-muted-foreground py-8 text-sm md:text-base">Your cart is empty</p>
-                      ) : (
-                        cart.map((item) => (
-                          <div key={item.id} className="flex gap-2.5 md:gap-4 border-b border-border pb-3 md:pb-4">
-                            <div className="h-20 w-20 md:h-24 md:w-24 rounded-md overflow-hidden flex-shrink-0">
-                              <img
-                                src={item.images[0]}
-                                alt={item.name}
-                                className="h-full w-full object-cover"
-                              />
+                  
+                  {!showCheckoutForm ? (
+                    <>
+                      {/* Cart Items Section - Scrollable */}
+                      <div className="flex-1 overflow-y-auto px-6 py-4">
+                        {cart.length === 0 ? (
+                          <div className="flex flex-col items-center justify-center py-12">
+                            <ShoppingCart className="h-16 w-16 text-muted-foreground/30 mb-4" />
+                            <p className="text-center text-muted-foreground text-sm md:text-base">Your cart is empty</p>
+                          </div>
+                        ) : (
+                          <div className="space-y-4">
+                            {cart.map((item) => (
+                              <Card key={item.id} className="p-4">
+                                <div className="flex gap-4">
+                                  <div className="h-24 w-24 rounded-lg overflow-hidden flex-shrink-0 border border-border">
+                                    <img
+                                      src={item.images[0]}
+                                      alt={item.name}
+                                      className="h-full w-full object-cover"
+                                    />
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-start justify-between gap-2 mb-2">
+                                      <div className="flex-1 min-w-0">
+                                        <h4 className="font-semibold text-sm md:text-base mb-1">{item.name}</h4>
+                                        <p className="text-xs text-muted-foreground">{item.color}</p>
+                                      </div>
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-8 w-8 flex-shrink-0"
+                                        onClick={() => removeFromCart(item.id)}
+                                      >
+                                        <X className="h-4 w-4" />
+                                      </Button>
+                                    </div>
+                                    <div className="flex items-center gap-2 mb-3">
+                                      <span className="text-lg font-bold">₹{item.price}</span>
+                                      <span className="text-sm text-muted-foreground line-through">
+                                        ₹{item.originalPrice}
+                                      </span>
+                                    </div>
+                                    <div className="flex items-center gap-3">
+                                      <span className="text-xs text-muted-foreground">Quantity:</span>
+                                      <div className="flex items-center gap-2 border border-border rounded-md">
+                                        <Button
+                                          variant="ghost"
+                                          size="icon"
+                                          className="h-8 w-8"
+                                          onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                                        >
+                                          <Minus className="h-3 w-3" />
+                                        </Button>
+                                        <span className="text-sm font-medium w-8 text-center">{item.quantity}</span>
+                                        <Button
+                                          variant="ghost"
+                                          size="icon"
+                                          className="h-8 w-8"
+                                          onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                                        >
+                                          <Plus className="h-3 w-3" />
+                                        </Button>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              </Card>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                      
+                      {/* Cart Summary - Fixed at Bottom */}
+                      {cart.length > 0 && (
+                        <div className="flex-shrink-0 border-t border-border bg-background px-6 py-4 space-y-4">
+                          <div className="space-y-2">
+                            <div className="flex justify-between text-sm">
+                              <span className="text-muted-foreground">Subtotal:</span>
+                              <span className="font-medium">₹{cartTotal}</span>
                             </div>
-                            <div className="flex-1 min-w-0">
-                              <h4 className="font-semibold text-sm md:text-base truncate">{item.name}</h4>
-                              <p className="text-xs text-muted-foreground mt-0.5 md:mt-1">{item.color}</p>
-                              <div className="flex items-center gap-1.5 md:gap-2 mt-1.5 md:mt-2">
-                                <span className="text-base md:text-lg font-bold">₹{item.price}</span>
-                                <span className="text-xs md:text-sm text-muted-foreground line-through">
-                                  ₹{item.originalPrice}
-                                </span>
-                              </div>
-                              <div className="flex items-center gap-1.5 md:gap-2 mt-1.5 md:mt-2">
-                                <Button
-                                  variant="outline"
-                                  size="icon"
-                                  className="h-6 w-6 md:h-7 md:w-7"
-                                  onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                                >
-                                  <Minus className="h-2.5 w-2.5 md:h-3 md:w-3" />
-                                </Button>
-                                <span className="text-xs md:text-sm w-6 md:w-8 text-center font-medium">{item.quantity}</span>
-                                <Button
-                                  variant="outline"
-                                  size="icon"
-                                  className="h-6 w-6 md:h-7 md:w-7"
-                                  onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                                >
-                                  <Plus className="h-2.5 w-2.5 md:h-3 md:w-3" />
-                                </Button>
-                              </div>
+                            <div className="flex justify-between text-sm">
+                              <span className="text-muted-foreground">You saved:</span>
+                              <span className="font-medium text-green-600">₹{totalSavings}</span>
                             </div>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-7 w-7 md:h-8 md:w-8 flex-shrink-0"
-                              onClick={() => removeFromCart(item.id)}
-                            >
-                              <X className="h-3.5 w-3.5 md:h-4 md:w-4" />
-                            </Button>
+                            <Separator />
+                            <div className="flex justify-between text-lg font-bold">
+                              <span>Total:</span>
+                              <span>₹{cartTotal}</span>
+                            </div>
                           </div>
-                        ))
-                      )}
-                    </div>
-                    {cart.length > 0 && (
-                      <div className="border-t border-border pt-3 md:pt-4 space-y-3 md:space-y-4 mt-auto flex-shrink-0">
-                        <div className="space-y-1.5 md:space-y-2">
-                          <div className="flex justify-between text-xs md:text-sm">
-                            <span className="text-muted-foreground">Subtotal:</span>
-                            <span className="font-medium">₹{cartTotal}</span>
-                          </div>
-                          <div className="flex justify-between text-xs md:text-sm">
-                            <span className="text-muted-foreground">You saved:</span>
-                            <span className="font-medium text-green-600">
-                             ₹{totalSavings}
-                            </span>
-                          </div>
-                          <Separator />
-                          <div className="flex justify-between text-base md:text-lg font-bold">
-                            <span>Total:</span>
-                            <span>₹{cartTotal}</span>
-                          </div>
+                          <Button 
+                            className="w-full h-11 text-base font-semibold"
+                            onClick={() => setShowCheckoutForm(true)}
+                          >
+                            Proceed to Checkout
+                          </Button>
                         </div>
-                        <Button className="w-full h-10 md:h-11 text-sm md:text-base">
-                          Proceed to Checkout
+                      )}
+                    </>
+                  ) : (
+                    /* Checkout Form Section - Scrollable */
+                    <div className="flex-1 overflow-y-auto px-6 py-4">
+                      <div className="mb-6">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setShowCheckoutForm(false)}
+                          className="-ml-2"
+                        >
+                          <X className="h-4 w-4 mr-2" />
+                          Back to Cart
                         </Button>
                       </div>
-                    )}
-                  </div>
+                      <div className="pb-4">
+                        <CheckoutForm />
+                      </div>
+                    </div>
+                  )}
                 </SheetContent>
               </Sheet>
             </div>
@@ -346,6 +639,67 @@ export default function TShirtStore() {
           </div>
         </div>
       </section>
+
+      {/* WhatsApp Popup */}
+      {showWhatsAppPopup && (
+        <div 
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4" 
+          onClick={() => setShowWhatsAppPopup(false)}
+        >
+          <div 
+            className="bg-background border border-border rounded-lg shadow-2xl max-w-md w-full p-6 relative z-[101]" 
+            onClick={(e) => e.stopPropagation()}
+            onMouseDown={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowWhatsAppPopup(false);
+              }}
+              className="absolute top-4 right-4 text-muted-foreground hover:text-foreground transition-colors z-10"
+            >
+              <X className="h-5 w-5" />
+            </button>
+            <div className="text-center">
+              <div className="mb-4">
+                <div className="mx-auto w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mb-4">
+                  <svg className="w-8 h-8 text-green-600" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
+                  </svg>
+                </div>
+                <h3 className="text-xl font-bold text-foreground mb-2">Join Our WhatsApp Community!</h3>
+                <p className="text-muted-foreground mb-6">
+                  Stay updated with order status, new arrivals, and exclusive offers by joining our WhatsApp channel.
+                </p>
+              </div>
+              <div className="flex flex-col gap-3">
+                <Button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    window.open('https://chat.whatsapp.com/Gs5NUa2iIh7FJ7zIRRH1ke', '_blank');
+                  }}
+                  className="w-full bg-green-600 hover:bg-green-700 text-white"
+                >
+                  Join WhatsApp Channel
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowWhatsAppPopup(false);
+                    setShowCheckoutForm(false);
+                    setShowCheckout(false);
+                    setCart([]);
+                  }}
+                  className="w-full"
+                >
+                  Continue Shopping
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-6 sm:py-8 md:py-12">
