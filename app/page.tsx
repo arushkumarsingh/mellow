@@ -25,6 +25,8 @@ import {
 import { Separator } from '@/components/ui/separator';
 import { Carousel } from '@/components/ui/carousel';
 
+type Size = 'S' | 'M' | 'L' | 'XL' | 'XXL';
+
 interface TShirt {
   id: number;
   name: string;
@@ -37,6 +39,7 @@ interface TShirt {
 
 interface CartItem extends TShirt {
   quantity: number;
+  size: Size;
 }
 
 export default function TShirtStore() {
@@ -44,6 +47,7 @@ export default function TShirtStore() {
   const [showCheckout, setShowCheckout] = useState(false);
   const [showCheckoutForm, setShowCheckoutForm] = useState(false);
   const [showWhatsAppPopup, setShowWhatsAppPopup] = useState(false);
+  const [selectedSizes, setSelectedSizes] = useState<Record<number, Size>>({});
 
   const tshirts: TShirt[] = [
     {
@@ -91,30 +95,46 @@ export default function TShirtStore() {
     { id: 3, text: 'Flash sale starts tomorrow', time: '2 days ago', unread: false },
   ];
 
-  const addToCart = (tshirt: TShirt) => {
+  const addToCart = (tshirt: TShirt, size: Size) => {
+    if (!size) {
+      alert('Please select a size');
+      return;
+    }
     setCart((prev) => {
-      const existing = prev.find((item) => item.id === tshirt.id);
+      // Check if same t-shirt with same size already exists
+      const existing = prev.find((item) => item.id === tshirt.id && item.size === size);
       if (existing) {
         return prev.map((item) =>
-          item.id === tshirt.id ? { ...item, quantity: item.quantity + 1 } : item
+          item.id === tshirt.id && item.size === size
+            ? { ...item, quantity: item.quantity + 1 }
+            : item
         );
       }
-      return [...prev, { ...tshirt, quantity: 1 }];
+      return [...prev, { ...tshirt, quantity: 1, size }];
     });
   };
 
-  const removeFromCart = (id: number) => {
-    setCart((prev) => prev.filter((item) => item.id !== id));
+  const removeFromCart = (id: number, size: Size) => {
+    setCart((prev) => prev.filter((item) => !(item.id === id && item.size === size)));
   };
 
-  const updateQuantity = (id: number, quantity: number) => {
+  const updateQuantity = (id: number, size: Size, quantity: number) => {
     if (quantity <= 0) {
-      removeFromCart(id);
+      removeFromCart(id, size);
       return;
     }
     setCart((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, quantity } : item))
+      prev.map((item) =>
+        item.id === id && item.size === size ? { ...item, quantity } : item
+      )
     );
+  };
+
+  const handleSizeSelect = (tshirtId: number, size: Size) => {
+    setSelectedSizes((prev) => ({
+      ...prev,
+      [tshirtId]: size,
+    }));
   };
 
   const cartTotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
@@ -224,6 +244,7 @@ export default function TShirtStore() {
         return;
       }
 
+      // Order metadata is already in hidden fields, Formspree will handle them
       await handleSubmit(e);
     };
 
@@ -436,6 +457,27 @@ export default function TShirtStore() {
           />
         </div>
 
+        {/* Hidden fields for order metadata */}
+        <input type="hidden" name="orderItems" value={JSON.stringify(cart.map((item, index) => ({
+          itemNumber: index + 1,
+          productName: item.name,
+          size: item.size,
+          color: item.color,
+          quantity: item.quantity,
+          unitPrice: item.price,
+          originalPrice: item.originalPrice,
+          itemTotal: item.price * item.quantity,
+          discount: item.discount,
+        })))} />
+        <input type="hidden" name="orderItemsText" value={cart.map((item) => 
+          `${item.name} - Size: ${item.size}, Color: ${item.color}, Qty: ${item.quantity}, Price: ₹${item.price * item.quantity}`
+        ).join(' | ')} />
+        <input type="hidden" name="totalItems" value={cartItemCount.toString()} />
+        <input type="hidden" name="subtotal" value={cartTotal.toString()} />
+        <input type="hidden" name="totalSavings" value={totalSavings.toString()} />
+        <input type="hidden" name="orderTotal" value={cartTotal.toString()} />
+        <input type="hidden" name="orderDate" value={new Date().toISOString()} />
+
         <div className="flex gap-3 pt-4">
           <Button
             type="button"
@@ -499,56 +541,64 @@ export default function TShirtStore() {
                           </div>
                         ) : (
                           <div className="space-y-4">
-                            {cart.map((item) => (
-                              <Card key={item.id} className="p-4">
-                                <div className="flex gap-4">
-                                  <div className="h-24 w-24 rounded-lg overflow-hidden flex-shrink-0 border border-border">
+                            {cart.map((item, index) => (
+                              <Card key={`${item.id}-${item.size}-${index}`} className="p-3 sm:p-4 overflow-hidden">
+                                <div className="flex gap-3 sm:gap-4">
+                                  <div className="h-20 w-20 sm:h-24 sm:w-24 rounded-lg overflow-hidden flex-shrink-0 border border-border">
                                     <img
                                       src={item.images[0]}
                                       alt={item.name}
                                       className="h-full w-full object-cover"
                                     />
                                   </div>
-                                  <div className="flex-1 min-w-0">
+                                  <div className="flex-1 min-w-0 overflow-hidden">
                                     <div className="flex items-start justify-between gap-2 mb-2">
-                                      <div className="flex-1 min-w-0">
-                                        <h4 className="font-semibold text-sm md:text-base mb-1">{item.name}</h4>
-                                        <p className="text-xs text-muted-foreground">{item.color}</p>
+                                      <div className="flex-1 min-w-0 overflow-hidden">
+                                        <h4 className="font-semibold text-sm sm:text-base mb-1 truncate">{item.name}</h4>
+                                        <div className="flex items-center gap-2 flex-wrap">
+                                          <p className="text-xs text-muted-foreground">{item.color}</p>
+                                          <span className="text-xs font-medium px-2 py-0.5 bg-primary/10 text-primary rounded border border-primary/20">
+                                            Size: {item.size}
+                                          </span>
+                                        </div>
                                       </div>
                                       <Button
                                         variant="ghost"
                                         size="icon"
-                                        className="h-8 w-8 flex-shrink-0"
-                                        onClick={() => removeFromCart(item.id)}
+                                        className="h-8 w-8 flex-shrink-0 touch-manipulation"
+                                        onClick={() => removeFromCart(item.id, item.size)}
+                                        style={{ WebkitTapHighlightColor: 'transparent' }}
                                       >
                                         <X className="h-4 w-4" />
                                       </Button>
                                     </div>
-                                    <div className="flex items-center gap-2 mb-3">
-                                      <span className="text-lg font-bold">₹{item.price}</span>
-                                      <span className="text-sm text-muted-foreground line-through">
+                                    <div className="flex items-center gap-2 mb-3 flex-wrap">
+                                      <span className="text-base sm:text-lg font-bold">₹{item.price}</span>
+                                      <span className="text-xs sm:text-sm text-muted-foreground line-through">
                                         ₹{item.originalPrice}
                                       </span>
                                     </div>
-                                    <div className="flex items-center gap-3">
-                                      <span className="text-xs text-muted-foreground">Quantity:</span>
-                                      <div className="flex items-center gap-2 border border-border rounded-md">
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                      <span className="text-xs text-muted-foreground whitespace-nowrap">Quantity:</span>
+                                      <div className="flex items-center border border-border rounded-md overflow-hidden flex-shrink-0">
                                         <Button
                                           variant="ghost"
                                           size="icon"
-                                          className="h-8 w-8"
-                                          onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                                          className="h-9 w-9 min-w-[36px] max-w-[36px] flex-shrink-0 touch-manipulation"
+                                          onClick={() => updateQuantity(item.id, item.size, item.quantity - 1)}
+                                          style={{ WebkitTapHighlightColor: 'transparent' }}
                                         >
-                                          <Minus className="h-3 w-3" />
+                                          <Minus className="h-4 w-4" />
                                         </Button>
-                                        <span className="text-sm font-medium w-8 text-center">{item.quantity}</span>
+                                        <span className="text-sm font-medium min-w-[28px] max-w-[40px] text-center px-1.5 py-1 flex-shrink-0">{item.quantity}</span>
                                         <Button
                                           variant="ghost"
                                           size="icon"
-                                          className="h-8 w-8"
-                                          onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                                          className="h-9 w-9 min-w-[36px] max-w-[36px] flex-shrink-0 touch-manipulation"
+                                          onClick={() => updateQuantity(item.id, item.size, item.quantity + 1)}
+                                          style={{ WebkitTapHighlightColor: 'transparent' }}
                                         >
-                                          <Plus className="h-3 w-3" />
+                                          <Plus className="h-4 w-4" />
                                         </Button>
                                       </div>
                                     </div>
@@ -622,12 +672,12 @@ export default function TShirtStore() {
               Premium T-Shirts Collection
             </h2>
             <p className="text-base sm:text-lg md:text-xl text-foreground/80 mb-6 md:mb-8">
-              Discover our curated selection of comfortable, stylish tees. Up to 40% off on selected items!
+              Discover our curated selection of comfortable, stylish tees. Up to 50% off on selected items!
             </p>
             <div className="flex items-center gap-2 sm:gap-3 md:gap-4 flex-wrap">
               <Badge variant="secondary" className="text-xs sm:text-sm md:text-base px-3 sm:px-4 md:px-5 py-1.5 sm:py-2 md:py-2.5 bg-primary/20 text-primary border border-primary/30 hover:bg-primary/30">
                 <Tag className="h-3 w-3 sm:h-3.5 sm:w-3.5 md:h-4 md:w-4 mr-1.5 md:mr-2" />
-                Save up to 40%
+                Save up to 50%
               </Badge>
               <Badge variant="outline" className="text-xs sm:text-sm md:text-base px-3 sm:px-4 md:px-5 py-1.5 sm:py-2 md:py-2.5 border-secondary/50 text-secondary hover:bg-secondary/10">
                 Free Returns
@@ -793,12 +843,43 @@ export default function TShirtStore() {
                     ₹{tshirt.originalPrice}
                   </span>
                 </div>
+                
+                {/* Size Selection */}
+                <div className="mb-3 md:mb-4">
+                  <p className="text-xs md:text-sm text-muted-foreground mb-2">Size:</p>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {(['S', 'M', 'L', 'XL', 'XXL'] as Size[]).map((size) => (
+                      <button
+                        key={size}
+                        type="button"
+                        onClick={() => handleSizeSelect(tshirt.id, size)}
+                        className={`px-3 py-1.5 text-xs md:text-sm font-medium rounded-md border transition-all touch-manipulation ${
+                          selectedSizes[tshirt.id] === size
+                            ? 'bg-primary text-primary-foreground border-primary'
+                            : 'bg-background text-foreground border-border hover:border-primary/50 hover:bg-accent'
+                        }`}
+                        style={{ WebkitTapHighlightColor: 'transparent' }}
+                      >
+                        {size}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
                 <Button
-                  className="w-full bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg shadow-primary/30 h-9 md:h-10 text-xs md:text-sm"
-                  onClick={() => addToCart(tshirt)}
+                  className="w-full bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg shadow-primary/30 h-9 md:h-10 text-xs md:text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                  onClick={() => {
+                    const size = selectedSizes[tshirt.id];
+                    if (!size) {
+                      alert('Please select a size');
+                      return;
+                    }
+                    addToCart(tshirt, size);
+                  }}
+                  disabled={!selectedSizes[tshirt.id]}
                 >
                   <ShoppingCart className="h-3.5 w-3.5 md:h-4 md:w-4 mr-1.5 md:mr-2" />
-                  Add to Cart
+                  {selectedSizes[tshirt.id] ? 'Add to Cart' : 'Select Size'}
                 </Button>
               </CardContent>
             </Card>

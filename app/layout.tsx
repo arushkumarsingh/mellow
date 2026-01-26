@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Mellow - Premium T-Shirts Collection",
-  description: "Discover our curated selection of comfortable, stylish tees. Up to 40% off on selected items!",
+  description: "Discover our curated selection of comfortable, stylish tees. Up to 50% off on selected items!",
 };
 
 export default function RootLayout({
